@@ -1,4 +1,4 @@
-# youtube-shorts-script-lab
+# ShortsLab
 
 指定したYouTubeチャンネルのShorts動画をすべて収集し、台本を文字起こしして人気順に分析。
 そのパターンをもとに、**Claude Code(チャット)** で新しいネタ案とフル台本を生成するツールです。
