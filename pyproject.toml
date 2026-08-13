@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "youtube-shorts-script-lab"
+version = "0.1.0"
+description = "YouTube Shortsチャンネルの台本を収集・分析し、人気動画のパターンから新しいネタ案とフル台本をClaudeで生成するツール"
+requires-python = ">=3.10"
+dependencies = [
+    "yt-dlp>=2024.8.6",
+    "faster-whisper>=1.0.3",
+    "python-dotenv>=1.0.1",
+    "tqdm>=4.66.0",
+]
+
+[project.scripts]
+shortslab = "shortslab.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
