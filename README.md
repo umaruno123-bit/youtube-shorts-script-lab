@@ -79,6 +79,14 @@ Claude Codeがファイルを読み、パターン分析・ネタ案・フル台
 `ideas_*.md` / `scripts_*.md` として保存してくれます。claude.ai のチャットに
 ファイルの中身を貼り付ける形でも同様に使えます。
 
+### テロップ分割(Canva向け)
+
+`docs/telop_manual.md` にテロップ作成マニュアル(画面ごとの分割ルール)を置いておくと、
+`prepare` が出力する指示書に自動で「4. テロップ分割」タスクが追加されます。Claude Codeが
+フル台本をこのルールに沿って画面ごとに分割し、`telop_*.md` として保存してくれるので、
+Canvaへの流し込みがそのまま楽になります。不要な場合は `--no-telop` で外せます。
+マニュアルの中身は自由に書き換えて自分のチャンネルのルールに合わせてください。
+
 ### 出力される主なファイル
 
 ```
@@ -91,6 +99,7 @@ data/<channel_slug>/
     claude_brief_YYYYMMDD_HHMMSS.md  # Claude Codeへ渡す指示書(prepareの出力)
     ideas_*.md                       # Claude Codeが生成するネタ案(手動で作成される)
     scripts_*.md                     # Claude Codeが生成するフル台本(手動で作成される)
+    telop_*.md                       # Claude Codeが生成するテロップ分割(手動で作成される)
 ```
 
 ### 主なオプション
@@ -105,6 +114,7 @@ data/<channel_slug>/
 | `rank` | `--top 20` / `--metric views\|engagement` | 上位件数と並び替え指標 |
 | | `--full` | 台本を80文字スニペットではなく全文で出力する |
 | `prepare` | `--top` / `--ideas` / `--scripts` | 分析対象数・作らせるネタ案数・フル台本化させる数 |
+| | `--no-telop` | `docs/telop_manual.md` があってもテロップ分割タスクを含めない |
 
 すべてのコマンドで `--data-dir` によりデータ保存先を変更できます(デフォルトはプロジェクト直下の `data/`)。
 
@@ -114,7 +124,7 @@ data/<channel_slug>/
 - `src/shortslab/transcribe.py` — 公式/自動字幕を優先取得、無ければ音声をDLしてfaster-whisperで文字起こし
 - `src/shortslab/store.py` — SQLiteでのメタデータ・台本の永続化
 - `src/shortslab/rank.py` — 再生数・エンゲージメント率でのランキング算出とレポート出力
-- `src/shortslab/prepare.py` — 人気動画の台本+タスク指示をまとめたClaude Code向けMarkdownを出力
+- `src/shortslab/prepare.py` — 人気動画の台本+タスク指示(+ `docs/telop_manual.md` があればテロップ分割タスク)をまとめたClaude Code向けMarkdownを出力
 - `src/shortslab/net.py` — YouTube側のレート制限(429)対策の簡易リトライ処理
 - `src/shortslab/cli.py` — `shortslab` コマンドのエントリポイント
 

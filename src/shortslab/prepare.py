@@ -12,6 +12,15 @@ from pathlib import Path
 
 from . import store
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+TELOP_MANUAL_PATH = PROJECT_ROOT / "docs" / "telop_manual.md"
+
+
+def _load_telop_manual() -> str | None:
+    if TELOP_MANUAL_PATH.exists():
+        return TELOP_MANUAL_PATH.read_text(encoding="utf-8").strip()
+    return None
+
 
 def _format_video_block(index: int, video: dict) -> str:
     transcript = (video.get("transcript") or "").strip()
@@ -29,16 +38,39 @@ def build_claude_brief(
     channel_slug: str,
     num_ideas: int,
     num_scripts: int,
+    telop: bool = True,
 ) -> str:
     videos_text = "\n".join(
         _format_video_block(i, v) for i, v in enumerate(videos, start=1)
     )
     stamp_hint = datetime.now().strftime("%Y%m%d_%H%M%S")
+    telop_manual = _load_telop_manual() if telop else None
+
+    num_tasks = 4 if telop_manual else 3
+    task4 = ""
+    output_lines = [
+        f"- 1(パターン分析)と2(ネタ案)を合わせて:\n  `data/{channel_slug}/reports/ideas_{stamp_hint}.md`",
+        f"- 3(フル台本)を:\n  `data/{channel_slug}/reports/scripts_{stamp_hint}.md`",
+    ]
+    if telop_manual:
+        task4 = f"""4. **テロップ分割**: 3で作ったフル台本それぞれについて、以下のテロップ作成
+   マニュアルのルールに従って、画面(テロップ)ごとにテキストを分割してください。
+   台本1本ごとに「1画面目: 〇〇」「2画面目: 〇〇」…という形の画面リストにしてください。
+
+### テロップ作成マニュアル
+
+{telop_manual}
+"""
+        output_lines.append(
+            f"- 4(テロップ分割)を:\n  `data/{channel_slug}/reports/telop_{stamp_hint}.md`"
+        )
+    output_text = "\n".join(output_lines)
+
     return f"""# Claude Codeへの依頼: 「{channel}」Shorts 新規ネタ・台本の生成
 
 このファイルは `shortslab prepare` が自動生成したものです。
 以下は「{channel}」の人気YouTube Shorts動画TOP{len(videos)}(再生数順)の実際の台本です。
-これを分析し、下記の3つのタスクを行ってください。
+これを分析し、下記の{num_tasks}つのタスクを行ってください。
 
 ## 入力データ: 人気動画TOP{len(videos)}の台本
 
@@ -59,13 +91,10 @@ def build_claude_brief(
 3. **フル台本化**: 2で出したネタ案のうち{num_scripts}件について、そのまま撮影・
    ナレーションに使えるレベルのShorts台本(尺目安30〜60秒)を作成してください。
    構成は「【フック】」「【本編】」「【締め・CTA】」「尺の目安(秒数)」としてください。
-
+{task4}
 ## 出力先(実際にファイルを書き出してください)
 
-- 1(パターン分析)と2(ネタ案)を合わせて:
-  `data/{channel_slug}/reports/ideas_{stamp_hint}.md`
-- 3(フル台本)を:
-  `data/{channel_slug}/reports/scripts_{stamp_hint}.md`
+{output_text}
 
 ## 注意
 
@@ -81,6 +110,7 @@ def prepare_for_channel(
     top: int = 15,
     num_ideas: int = 10,
     num_scripts: int = 5,
+    telop: bool = True,
 ) -> Path:
     channel_slug = store.slugify(channel)
     db_path = store.db_path_for(data_dir, channel_slug)
@@ -103,7 +133,9 @@ def prepare_for_channel(
         )
 
     videos = [dict(row) for row in rows]
-    brief = build_claude_brief(videos, channel, channel_slug, num_ideas, num_scripts)
+    brief = build_claude_brief(
+        videos, channel, channel_slug, num_ideas, num_scripts, telop=telop
+    )
 
     reports_dir = data_dir / channel_slug / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)

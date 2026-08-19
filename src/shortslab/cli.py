@@ -65,6 +65,7 @@ def cmd_prepare(args: argparse.Namespace) -> None:
         top=args.top,
         num_ideas=args.ideas,
         num_scripts=args.scripts,
+        telop=not args.no_telop,
     )
     print(f"[prepare] Claude Code向け指示書を出力しました: {out_path}")
     print(
@@ -126,6 +127,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_prepare.add_argument("--top", type=int, default=15, help="分析対象にする上位動画数")
     p_prepare.add_argument("--ideas", type=int, default=10, help="生成させるネタ案の数")
     p_prepare.add_argument("--scripts", type=int, default=5, help="フル台本化させるネタ案の数")
+    p_prepare.add_argument(
+        "--no-telop",
+        action="store_true",
+        help="docs/telop_manual.mdがあってもテロップ分割タスクを指示書に含めない",
+    )
     p_prepare.set_defaults(func=cmd_prepare)
 
     p_all = sub.add_parser("all", help="fetch → transcribe → rank → prepare を一括実行")
@@ -141,6 +147,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_all.add_argument("--full", action="store_true")
     p_all.add_argument("--ideas", type=int, default=10)
     p_all.add_argument("--scripts", type=int, default=5)
+    p_all.add_argument("--no-telop", action="store_true")
     p_all.set_defaults(func=cmd_all)
 
     return parser
