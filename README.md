@@ -87,6 +87,21 @@ Claude Codeがファイルを読み、パターン分析・ネタ案・フル台
 Canvaへの流し込みがそのまま楽になります。不要な場合は `--no-telop` で外せます。
 マニュアルの中身は自由に書き換えて自分のチャンネルのルールに合わせてください。
 
+### さらに先へ: 動画そのものを完成させる
+
+台本・テロップだけでなく、実際に「テロップ・画像入りの動画ファイル」を
+Claude Codeに組み立てさせることもできます。[docs/video_production_guide.md](docs/video_production_guide.md)
+に、音声とテロップのタイミングを正確に合わせる方法(無音検出だけに頼ると
+失敗する、というハマりどころも含む)・画像の当てはめ方・ffmpegでの組み立て
+手順までまとめています。
+
+そのために使う `shortslab timing` コマンドは、動画/音声ファイルを渡すと
+実際の発話を単語単位のタイムスタンプ付きで文字起こしします。
+
+```bash
+shortslab timing "動画ファイル.mp4" --model medium --out timing_result.txt
+```
+
 ### 出力される主なファイル
 
 ```
@@ -115,6 +130,8 @@ data/<channel_slug>/
 | | `--full` | 台本を80文字スニペットではなく全文で出力する |
 | `prepare` | `--top` / `--ideas` / `--scripts` | 分析対象数・作らせるネタ案数・フル台本化させる数 |
 | | `--no-telop` | `docs/telop_manual.md` があってもテロップ分割タスクを含めない |
+| `timing` | `--model medium` | Whisperモデルサイズ。動画/音声の実発話タイミングを単語単位で取得する([動画完成マニュアル](docs/video_production_guide.md)参照) |
+| | `--out FILE` | 結果の書き出し先(未指定なら標準出力) |
 
 すべてのコマンドで `--data-dir` によりデータ保存先を変更できます(デフォルトはプロジェクト直下の `data/`)。
 
@@ -126,6 +143,7 @@ data/<channel_slug>/
 - `src/shortslab/rank.py` — 再生数・エンゲージメント率でのランキング算出とレポート出力
 - `src/shortslab/prepare.py` — 人気動画の台本+タスク指示(+ `docs/telop_manual.md` があればテロップ分割タスク)をまとめたClaude Code向けMarkdownを出力
 - `src/shortslab/net.py` — YouTube側のレート制限(429)対策の簡易リトライ処理
+- `src/shortslab/timing.py` — faster-whisperで動画/音声を単語単位のタイムスタンプ付きで文字起こし(テロップ同期用)
 - `src/shortslab/cli.py` — `shortslab` コマンドのエントリポイント
 
 ## トラブルシューティング

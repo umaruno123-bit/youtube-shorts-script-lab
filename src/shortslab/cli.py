@@ -9,7 +9,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from . import fetch, prepare, rank, transcribe
+from . import fetch, prepare, rank, timing, transcribe
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
@@ -75,6 +75,18 @@ def cmd_prepare(args: argparse.Namespace) -> None:
     )
 
 
+def cmd_timing(args: argparse.Namespace) -> None:
+    result = timing.transcribe_word_timestamps(
+        args.media, language=args.lang, model_size=args.model
+    )
+    text = timing.render_as_text(result)
+    if args.out:
+        args.out.write_text(text, encoding="utf-8")
+        print(f"[timing] 書き出しました: {args.out}")
+    else:
+        print(text)
+
+
 def cmd_all(args: argparse.Namespace) -> None:
     cmd_fetch(args)
     cmd_transcribe(args)
@@ -133,6 +145,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="docs/telop_manual.mdがあってもテロップ分割タスクを指示書に含めない",
     )
     p_prepare.set_defaults(func=cmd_prepare)
+
+    p_timing = sub.add_parser(
+        "timing",
+        help="動画/音声を単語単位のタイムスタンプ付きで文字起こしする(テロップ同期の根拠データ作成用)",
+    )
+    p_timing.add_argument("media", type=Path, help="動画または音声ファイルのパス")
+    p_timing.add_argument("--lang", default="ja", help="言語コード(デフォルト: ja)")
+    p_timing.add_argument(
+        "--model", default="medium", help="Whisperモデルサイズ(tiny/base/small/medium/large-v3)"
+    )
+    p_timing.add_argument("--out", type=Path, default=None, help="出力先テキストファイル(未指定なら標準出力)")
+    p_timing.set_defaults(func=cmd_timing)
 
     p_all = sub.add_parser("all", help="fetch → transcribe → rank → prepare を一括実行")
     _add_common_args(p_all)
